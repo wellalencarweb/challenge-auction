@@ -1,54 +1,57 @@
 
-package auction
+package auction_test
 
 import (
-	"context"
-	"os"
-	"testing"
-	"time"
+    "context"
+    "os"
+    "testing"
+    "time"
 
-	"fullcycle-auction_go/internal/entity/auction_entity"
-	"go.mongodb.org/mongo-driver/mongo/options"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/bson"
+    "fullcycle-auction_go/internal/entity/auction_entity"
+    auctiondb "fullcycle-auction_go/internal/infra/database/auction"
+
+    "go.mongodb.org/mongo-driver/mongo"
+    "go.mongodb.org/mongo-driver/mongo/options"
+    "go.mongodb.org/mongo-driver/bson"
 )
 
-func TestAutoCloseAuction(t *testing.T) {
-	os.Setenv("AUCTION_DURATION_SECONDS", "5")
+func TestAuctionAutoClose(t *testing.T) {
+    os.Setenv("AUCTION_DURATION_SECONDS", "2")
 
-	ctx := context.Background()
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI("mongodb://localhost:27017"))
-	if err != nil {
-		t.Fatalf("failed to connect to MongoDB: %v", err)
-	}
-	db := client.Database("auction_db_test")
-	db.Collection("auctions").Drop(ctx)
+    ctx := context.Background()
+    client, err := mongo.Connect(ctx, options.Client().ApplyURI("mongodb://localhost:27017"))
+    if err != nil {
+        t.Fatalf("erro ao conectar no MongoDB: %v", err)
+    }
+    defer client.Disconnect(ctx)
 
-	repo := NewAuctionRepository(db)
+    db := client.Database("auction")
+    repo := auctiondb.NewAuctionRepository(db)
 
-	auction := &auction_entity.Auction{
-		ID:          "test-auction-1",
-		ProductName: "Test Product",
-		Category:    "Test Category",
-		Description: "Testing",
-		Condition:   auction_entity.NEW,
-		Status:      auction_entity.OPEN,
-	}
+    auction := &auction_entity.AuctionEntity{
+        Id:          "test-auto-close",
+        ProductName: "Produto Teste",
+        Category:    "Categoria X",
+        Description: "Teste automático",
+        Condition:   auction_entity.New,
+        Status:      auction_entity.Opened,
+        Timestamp:   time.Now().Unix(),
+    }
 
-	_, err = repo.CreateAuction(ctx, auction)
-	if err != nil {
-		t.Fatalf("failed to create auction: %v", err)
-	}
+    err = repo.CreateAuction(ctx, auction)
+    if err != nil {
+        t.Fatalf("erro ao criar auction: %v", err)
+    }
 
-	time.Sleep(7 * time.Second)
+    time.Sleep(3 * time.Second)
 
-	var result AuctionEntityMongo
-	err = db.Collection("auctions").FindOne(ctx, bson.M{"_id": auction.ID}).Decode(&result)
-	if err != nil {
-		t.Fatalf("failed to fetch auction: %v", err)
-	}
+    var result bson.M
+    err = db.Collection("auctions").FindOne(ctx, bson.M{"_id": "test-auto-close"}).Decode(&result)
+    if err != nil {
+        t.Fatalf("erro ao buscar auction: %v", err)
+    }
 
-	if result.Status != auction_entity.CLOSED {
-		t.Fatalf("expected auction to be CLOSED but got %s", result.Status)
-	}
+    if result["status"] != "CLOSED" {
+        t.Errorf("esperava status CLOSED, obteve %v", result["status"])
+    }
 }

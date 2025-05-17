@@ -2,15 +2,10 @@ package auction
 
 import (
 	"context"
-	"os"
-	"strconv"
-	"time"
-
 	"fullcycle-auction_go/configuration/logger"
 	"fullcycle-auction_go/internal/entity/auction_entity"
 	"fullcycle-auction_go/internal/internal_error"
 
-	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -23,7 +18,6 @@ type AuctionEntityMongo struct {
 	Status      auction_entity.AuctionStatus    `bson:"status"`
 	Timestamp   int64                           `bson:"timestamp"`
 }
-
 type AuctionRepository struct {
 	Collection *mongo.Collection
 }
@@ -36,46 +30,40 @@ func NewAuctionRepository(database *mongo.Database) *AuctionRepository {
 
 func (ar *AuctionRepository) CreateAuction(
 	ctx context.Context,
-	auctionEnt *auction_entity.Auction,
-) (*auction_entity.Auction, error) {
-	auctionToInsert := AuctionEntityMongo{
-		Id:          auctionEnt.Id,
-		ProductName: auctionEnt.ProductName,
-		Category:    auctionEnt.Category,
-		Description: auctionEnt.Description,
-		Condition:   auctionEnt.Condition,
-		Status:      auctionEnt.Status,
-		Timestamp:   time.Now().Unix(),
+	auctionEntity *auction_entity.Auction) *internal_error.InternalError {
+	auctionEntityMongo := &AuctionEntityMongo{
+		Id:          auctionEntity.Id,
+		ProductName: auctionEntity.ProductName,
+		Category:    auctionEntity.Category,
+		Description: auctionEntity.Description,
+		Condition:   auctionEntity.Condition,
+		Status:      auctionEntity.Status,
+		Timestamp:   auctionEntity.Timestamp.Unix(),
 	}
-
-	_, err := ar.Collection.InsertOne(ctx, auctionToInsert)
+	_, err := ar.Collection.InsertOne(ctx, auctionEntityMongo)
 	if err != nil {
-		logger.Error("error inserting auction", err)
-		return nil, internal_error.NewInternalServerError("Error inserting auction")
+		logger.Error("Error trying to insert auction", err)
+		return internal_error.NewInternalServerError("Error trying to insert auction")
 	}
 
-	go ar.startAuctionTimer(auctionToInsert.Id)
+	
+	// Lógica de fechamento automático usando goroutine
+	go func(auctionId string) {
+		durationStr := os.Getenv("AUCTION_DURATION_SECONDS")
+		duration, err := strconv.Atoi(durationStr)
+		if err != nil || duration <= 0 {
+			duration = 30 // valor padrão de fallback (30 segundos)
+		}
+		time.Sleep(time.Duration(duration) * time.Second)
 
-	return auctionEnt, nil
-}
+		filter := bson.M{"_id": auctionId, "status": "OPENED"}
+		update := bson.M{"$set": bson.M{"status": "CLOSED"}}
 
-func (ar *AuctionRepository) startAuctionTimer(auctionID string) {
-	durationStr := os.Getenv("AUCTION_DURATION_SECONDS")
-	durationSec, err := strconv.Atoi(durationStr)
-	if err != nil {
-		durationSec = 60 // valor padrão
-	}
+		_, err = ar.Collection.UpdateOne(context.Background(), filter, update)
+		if err != nil {
+			logger.Error("erro ao fechar o leilão automaticamente", err)
+		}
+	}(auctionEntity.Id)
 
-	time.Sleep(time.Duration(durationSec) * time.Second)
-
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	filter := bson.M{"_id": auctionID, "status": auction_entity.Active}
-	update := bson.M{"$set": bson.M{"status": auction_entity.Completed}}
-
-	_, err = ar.Collection.UpdateOne(ctx, filter, update)
-	if err != nil {
-		logger.Error("failed to auto-close auction", err)
-	}
+	return nil
 }

@@ -3,9 +3,8 @@ package auction_entity
 import (
 	"context"
 	"fullcycle-auction_go/internal/internal_error"
-	"time"
-
 	"github.com/google/uuid"
+	"time"
 )
 
 func CreateAuction(
