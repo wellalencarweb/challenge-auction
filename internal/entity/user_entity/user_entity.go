@@ -2,7 +2,8 @@ package user_entity
 
 import (
 	"context"
-	"fullcycle-auction_go/internal/internal_error"
+
+	"github.com/wellalencarweb/challenge-auction/internal/internal_error"
 )
 
 type User struct {
