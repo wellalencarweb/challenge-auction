@@ -1,89 +1,68 @@
 
-# 🏷️ Challenge Auction - Fechamento Automático de Leilões
+# Desafio Go Routines - Abertura e Fechamento do Leilão
 
-Este projeto implementa uma nova funcionalidade para fechamento automático de leilões, com base em tempo configurável via variável de ambiente.
+Este projeto é parte do desafio da Pós Go Expert da Full Cycle e implementa uma rotina de fechamento automático de leilões utilizando goroutines.
 
----
+## ✅ Funcionalidade Implementada
 
-## 🚀 Funcionalidade Adicionada
-
-- Ao criar um leilão, uma **goroutine** é iniciada automaticamente.
-- Essa goroutine aguarda o tempo configurado (`AUCTION_DURATION_SECONDS`) e **fecha o leilão automaticamente**, atualizando seu status para `CLOSED`.
-
----
-
-## ⚙️ Como Rodar o Projeto (Dev Environment)
-
-### 1. Clone o repositório
-
-```bash
-git clone https://github.com/wellalencarweb/challenge-auction.git
-cd challenge-auction
-```
-
-### 2. Configure a variável de ambiente
-
-Edite ou crie um `.env` (ou configure diretamente no `docker-compose.yml`):
-
-```env
-AUCTION_DURATION_SECONDS=10
-```
-
-> Tempo em segundos que o leilão ficará aberto após sua criação.
-
-### 3. Suba a aplicação com Docker
-
-```bash
-docker-compose up --build
-```
+- Leilões agora são automaticamente encerrados após um tempo configurado via variável de ambiente (`AUCTION_DURATION_SECONDS`).
+- A verificação roda periodicamente em uma goroutine.
+- Teste automatizado incluso para validar o fechamento automático.
 
 ---
 
-## 🧪 Executando os Testes
+## 🚀 Como rodar o projeto
 
 ### Pré-requisitos
 
-- Ter o MongoDB rodando localmente em `mongodb://localhost:27017`
-  (isso é feito pelo próprio `docker-compose`).
+- Docker
+- Docker Compose
 
-### Executar os testes:
-
-```bash
-docker exec -it challenge-auction-app go test ./...
-```
-
-Ou diretamente localmente, com Go instalado:
+### Passos
 
 ```bash
-go test ./internal/infra/database/auction/...
+# Subir os serviços
+make up
 ```
 
-O teste principal está em:
+O serviço Go será iniciado junto ao MongoDB.
 
+---
+
+## ⚙️ Variáveis de Ambiente
+
+As variáveis estão no arquivo `.env`. A principal variável adicionada é:
+
+```env
+AUCTION_DURATION_SECONDS=30
 ```
-internal/infra/database/auction/create_auction_test.go
+
+Ela define o tempo (em segundos) que um leilão pode permanecer aberto.
+
+---
+
+## 🧪 Rodando os testes
+
+Após o ambiente estar no ar, execute:
+
+```bash
+make test
 ```
 
----
-
-## 📁 Estrutura de Código Alterada
-
-- `internal/infra/database/auction/create_auction.go`: Lógica de goroutine adicionada
-- `internal/infra/database/auction/create_auction_test.go`: Teste de fechamento automático
+Isso executará os testes unitários, incluindo o teste de fechamento automático de leilões.
 
 ---
 
-## 🧠 Dica Técnica
+## 🗂 Estrutura Relevante
 
-- A goroutine usa `time.Sleep` com base no tempo da variável de ambiente para aguardar e então fechar o leilão.
-- O fechamento é feito com `UpdateOne` no MongoDB, garantindo que apenas leilões com status `OPENED` sejam alterados.
-
----
-
-## 📞 Suporte
-
-Em caso de dúvidas, envie uma issue ou mensagem para o responsável do repositório.
+- `internal/infra/database/auction/create_auction.go`: Contém a lógica de monitoramento automático dos leilões.
+- `internal/infra/database/auction/auction_monitor_test.go`: Teste automatizado criado para este desafio.
+- `docker-compose.yml`: Define os serviços da aplicação e MongoDB.
 
 ---
 
-Desenvolvido com 💡 por Go Expert 🚀
+## 📦 Encerrando
+
+```bash
+make down
+```

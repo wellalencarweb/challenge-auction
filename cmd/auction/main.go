@@ -32,6 +32,11 @@ func main() {
 		return
 	}
 
+	
+	// Inicia monitoramento de leilões expirados
+	go auctionRepository.StartAuctionMonitor(ctx)
+
+
 	router := gin.Default()
 
 	userController, bidController, auctionsController := initDependencies(databaseConnection)
