@@ -6,85 +6,68 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/wellalencarweb/challenge-auction/configuration/logger"
-	"github.com/wellalencarweb/challenge-auction/internal/entity/auction_entity"
-	"github.com/wellalencarweb/challenge-auction/internal/internal_error"
-
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"github.com/wellalencarweb/challenge-auction/internal/entity"
+	"go.uber.org/zap"
+	"gorm.io/gorm"
 )
 
-type AuctionEntityMongo struct {
-	Id          string                          `bson:"_id"`
-	ProductName string                          `bson:"product_name"`
-	Category    string                          `bson:"category"`
-	Description string                          `bson:"description"`
-	Condition   auction_entity.ProductCondition `bson:"condition"`
-	Status      auction_entity.AuctionStatus    `bson:"status"`
-	Timestamp   int64                           `bson:"timestamp"`
-}
-type AuctionRepository struct {
-	Collection *mongo.Collection
+type Repository struct {
+	Db     *gorm.DB
+	Logger *zap.SugaredLogger
 }
 
-func NewAuctionRepository(database *mongo.Database) *AuctionRepository {
-	return &AuctionRepository{
-		Collection: database.Collection("auctions"),
+func (r *Repository) CreateAuction(ctx context.Context, auction *entity.Auction) error {
+	// Criação do leilão no banco de dados
+	if err := r.Db.WithContext(ctx).Create(auction).Error; err != nil {
+		r.Logger.Errorw("failed to create auction", "error", err)
+		return err
 	}
-}
 
-func (ar *AuctionRepository) CreateAuction(
-	ctx context.Context,
-	auctionEntity *auction_entity.Auction) *internal_error.InternalError {
-	auctionEntityMongo := &AuctionEntityMongo{
-		Id:          auctionEntity.Id,
-		ProductName: auctionEntity.ProductName,
-		Category:    auctionEntity.Category,
-		Description: auctionEntity.Description,
-		Condition:   auctionEntity.Condition,
-		Status:      auctionEntity.Status,
-		Timestamp:   auctionEntity.Timestamp.Unix(),
-	}
-	_, err := ar.Collection.InsertOne(ctx, auctionEntityMongo)
+	// Obtém duração do leilão (minutos)
+	duration, err := r.getAuctionDuration()
 	if err != nil {
-		logger.Error("Error trying to insert auction", err)
-		return internal_error.NewInternalServerError("Error trying to insert auction")
+		r.Logger.Warnw("using default auction duration", "default", "5m", "error", err)
+		duration = 5 * time.Minute
 	}
+
+	// Inicia goroutine para fechamento automático
+	go r.scheduleAuctionClosing(ctx, auction.ID, duration)
 
 	return nil
 }
 
-func (repo *AuctionRepository) StartAuctionMonitor(ctx context.Context) {
-	durationStr := os.Getenv("AUCTION_DURATION_SECONDS")
-	durationSeconds, err := strconv.Atoi(durationStr)
-	if err != nil {
-		logger.Error("Invalid AUCTION_DURATION_SECONDS value", err)
-		return
+func (r *Repository) getAuctionDuration() (time.Duration, error) {
+	durationStr := os.Getenv("AUCTION_DURATION_MINUTES")
+	if durationStr == "" {
+		return 0, strconv.ErrSyntax
 	}
 
-	ticker := time.NewTicker(10 * time.Second)
-	go func() {
-		for {
-			select {
-			case <-ticker.C:
-				now := time.Now().Unix()
-				filter := bson.M{
-					"status":    auction_entity.OPEN,
-					"timestamp": bson.M{"$lte": now - int64(durationSeconds)},
-				}
-				update := bson.M{"$set": bson.M{"status": auction_entity.CLOSED}}
+	minutes, err := strconv.Atoi(durationStr)
+	if err != nil {
+		return 0, err
+	}
 
-				_, err := repo.Collection.UpdateMany(ctx, filter, update, options.Update())
-				if err != nil {
-					logger.Error("Error updating expired auctions", err)
-				} else {
-					logger.Info("Checked for expired auctions")
-				}
-			case <-ctx.Done():
-				ticker.Stop()
-				return
-			}
-		}
-	}()
+	return time.Duration(minutes) * time.Minute, nil
+}
+
+func (r *Repository) scheduleAuctionClosing(ctx context.Context, auctionID string, duration time.Duration) {
+	select {
+	case <-time.After(duration):
+		r.closeAuction(ctx, auctionID)
+	case <-ctx.Done():
+		r.Logger.Infow("auction closing canceled", "auctionID", auctionID, "reason", ctx.Err())
+	}
+}
+
+func (r *Repository) closeAuction(ctx context.Context, auctionID string) {
+	result := r.Db.WithContext(ctx).
+		Model(&entity.Auction{}).
+		Where("id = ? AND status = 'open'", auctionID).
+		Update("status", "closed")
+
+	if result.Error != nil {
+		r.Logger.Errorw("failed to close auction",
+			"auctionID", auctionID,
+			"error", result.Error)
+	}
 }
