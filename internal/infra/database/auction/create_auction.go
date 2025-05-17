@@ -39,7 +39,7 @@ func (ar *AuctionRepository) CreateAuction(
 	auctionEnt *auction_entity.Auction,
 ) (*auction_entity.Auction, error) {
 	auctionToInsert := AuctionEntityMongo{
-		Id:          auctionEnt.ID,
+		Id:          auctionEnt.Id,
 		ProductName: auctionEnt.ProductName,
 		Category:    auctionEnt.Category,
 		Description: auctionEnt.Description,
@@ -71,8 +71,8 @@ func (ar *AuctionRepository) startAuctionTimer(auctionID string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	filter := bson.M{"_id": auctionID, "status": auction_entity.OPEN}
-	update := bson.M{"$set": bson.M{"status": auction_entity.CLOSED}}
+	filter := bson.M{"_id": auctionID, "status": auction_entity.Active}
+	update := bson.M{"$set": bson.M{"status": auction_entity.Completed}}
 
 	_, err = ar.Collection.UpdateOne(ctx, filter, update)
 	if err != nil {
