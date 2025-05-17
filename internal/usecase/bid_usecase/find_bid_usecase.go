@@ -3,7 +3,7 @@ package bid_usecase
 import (
 	"context"
 
-	"github.com/wellalencarweb/challenge-auction/internal/internal_error"
+	"challenge-auction/internal/internal_error"
 )
 
 func (bu *BidUseCase) FindBidByAuctionId(

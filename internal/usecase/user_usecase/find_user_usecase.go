@@ -3,8 +3,8 @@ package user_usecase
 import (
 	"context"
 
-	"github.com/wellalencarweb/challenge-auction/internal/entity/user_entity"
-	"github.com/wellalencarweb/challenge-auction/internal/internal_error"
+	"challenge-auction/internal/entity/user_entity"
+	"challenge-auction/internal/internal_error"
 )
 
 func NewUserUseCase(userRepository user_entity.UserRepositoryInterface) UserUseCaseInterface {

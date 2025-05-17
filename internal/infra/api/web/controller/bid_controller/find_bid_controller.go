@@ -4,9 +4,10 @@ import (
 	"context"
 	"net/http"
 
+	"challenge-auction/configuration/rest_err"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/wellalencarweb/challenge-auction/configuration/rest_err"
 )
 
 func (u *BidController) FindBidByAuctionId(c *gin.Context) {

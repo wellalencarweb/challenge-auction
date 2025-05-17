@@ -4,7 +4,8 @@ import (
 	"context"
 	"os"
 
-	"github.com/wellalencarweb/challenge-auction/configuration/logger"
+	"challenge-auction/configuration/logger"
+
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )

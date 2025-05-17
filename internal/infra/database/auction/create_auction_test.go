@@ -5,9 +5,10 @@ import (
 	"testing"
 	"time"
 
+	"challenge-auction/internal/entity/auction_entity"
+	"challenge-auction/internal/internal_error"
+
 	"github.com/stretchr/testify/assert"
-	"github.com/wellalencarweb/challenge-auction/internal/entity/auction_entity"
-	"github.com/wellalencarweb/challenge-auction/internal/internal_error"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 

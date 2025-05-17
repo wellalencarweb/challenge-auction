@@ -5,9 +5,10 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/wellalencarweb/challenge-auction/configuration/logger"
-	"github.com/wellalencarweb/challenge-auction/internal/entity/user_entity"
-	"github.com/wellalencarweb/challenge-auction/internal/internal_error"
+	"challenge-auction/configuration/logger"
+	"challenge-auction/internal/entity/user_entity"
+	"challenge-auction/internal/internal_error"
+
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )

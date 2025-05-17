@@ -4,10 +4,10 @@ import (
 	"context"
 	"time"
 
-	"github.com/wellalencarweb/challenge-auction/internal/entity/auction_entity"
-	"github.com/wellalencarweb/challenge-auction/internal/entity/bid_entity"
-	"github.com/wellalencarweb/challenge-auction/internal/internal_error"
-	"github.com/wellalencarweb/challenge-auction/internal/usecase/bid_usecase"
+	"challenge-auction/internal/entity/auction_entity"
+	"challenge-auction/internal/entity/bid_entity"
+	"challenge-auction/internal/internal_error"
+	"challenge-auction/internal/usecase/bid_usecase"
 )
 
 type AuctionInputDTO struct {

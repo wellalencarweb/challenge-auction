@@ -5,10 +5,11 @@ import (
 	"net/http"
 	"strconv"
 
+	"challenge-auction/configuration/rest_err"
+	"challenge-auction/internal/usecase/auction_usecase"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/wellalencarweb/challenge-auction/configuration/rest_err"
-	"github.com/wellalencarweb/challenge-auction/internal/usecase/auction_usecase"
 )
 
 func (u *AuctionController) FindAuctionById(c *gin.Context) {

@@ -3,7 +3,7 @@ package rest_err
 import (
 	"net/http"
 
-	"github.com/wellalencarweb/challenge-auction/internal/internal_error"
+	"challenge-auction/internal/internal_error"
 )
 
 type RestErr struct {

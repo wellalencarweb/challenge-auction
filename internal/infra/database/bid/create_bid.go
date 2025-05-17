@@ -6,11 +6,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/wellalencarweb/challenge-auction/configuration/logger"
-	"github.com/wellalencarweb/challenge-auction/internal/entity/auction_entity"
-	"github.com/wellalencarweb/challenge-auction/internal/entity/bid_entity"
-	"github.com/wellalencarweb/challenge-auction/internal/infra/database/auction"
-	"github.com/wellalencarweb/challenge-auction/internal/internal_error"
+	"challenge-auction/configuration/logger"
+	"challenge-auction/internal/entity/auction_entity"
+	"challenge-auction/internal/entity/bid_entity"
+	"challenge-auction/internal/infra/database/auction"
+	"challenge-auction/internal/internal_error"
 
 	"go.mongodb.org/mongo-driver/mongo"
 )

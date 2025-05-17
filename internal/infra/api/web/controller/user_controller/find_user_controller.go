@@ -4,10 +4,11 @@ import (
 	"context"
 	"net/http"
 
+	"challenge-auction/configuration/rest_err"
+	"challenge-auction/internal/usecase/user_usecase"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/wellalencarweb/challenge-auction/configuration/rest_err"
-	"github.com/wellalencarweb/challenge-auction/internal/usecase/user_usecase"
 )
 
 type UserController struct {

@@ -3,7 +3,7 @@ package user_entity
 import (
 	"context"
 
-	"github.com/wellalencarweb/challenge-auction/internal/internal_error"
+	"challenge-auction/internal/internal_error"
 )
 
 type User struct {

@@ -4,10 +4,11 @@ import (
 	"context"
 	"net/http"
 
+	"challenge-auction/configuration/rest_err"
+	"challenge-auction/internal/infra/api/web/validation"
+	"challenge-auction/internal/usecase/bid_usecase"
+
 	"github.com/gin-gonic/gin"
-	"github.com/wellalencarweb/challenge-auction/configuration/rest_err"
-	"github.com/wellalencarweb/challenge-auction/internal/infra/api/web/validation"
-	"github.com/wellalencarweb/challenge-auction/internal/usecase/bid_usecase"
 )
 
 type BidController struct {

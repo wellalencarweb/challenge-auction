@@ -4,8 +4,9 @@ import (
 	"context"
 	"time"
 
+	"challenge-auction/internal/internal_error"
+
 	"github.com/google/uuid"
-	"github.com/wellalencarweb/challenge-auction/internal/internal_error"
 )
 
 type Bid struct {

@@ -4,12 +4,13 @@ import (
 	"encoding/json"
 	"errors"
 
+	"challenge-auction/configuration/rest_err"
+
 	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/locales/en"
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
 	validator_en "github.com/go-playground/validator/v10/translations/en"
-	"github.com/wellalencarweb/challenge-auction/configuration/rest_err"
 )
 
 var (

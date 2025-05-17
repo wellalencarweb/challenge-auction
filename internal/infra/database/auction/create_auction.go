@@ -7,9 +7,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/wellalencarweb/challenge-auction/internal/entity/auction_entity"
-	"github.com/wellalencarweb/challenge-auction/internal/infra/database"
-	"github.com/wellalencarweb/challenge-auction/internal/internal_error"
+	"challenge-auction/internal/entity/auction_entity"
+	"challenge-auction/internal/infra/database"
+	"challenge-auction/internal/internal_error"
 )
 
 type CreateAuctionInputDTO struct {

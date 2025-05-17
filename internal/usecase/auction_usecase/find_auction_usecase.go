@@ -3,10 +3,10 @@ package auction_usecase
 import (
 	"context"
 
-	"github.com/wellalencarweb/challenge-auction/configuration/logger"
-	"github.com/wellalencarweb/challenge-auction/internal/entity/auction_entity"
-	"github.com/wellalencarweb/challenge-auction/internal/internal_error"
-	"github.com/wellalencarweb/challenge-auction/internal/usecase/bid_usecase"
+	"challenge-auction/configuration/logger"
+	"challenge-auction/internal/entity/auction_entity"
+	"challenge-auction/internal/internal_error"
+	"challenge-auction/internal/usecase/bid_usecase"
 )
 
 func (au *AuctionUseCase) FindAuctionById(
