@@ -1,119 +1,52 @@
 package auction
 
 import (
-	"context"
-	"fmt"
-	"os"
+	"go.mongodb.org/mongo-driver/bson"
 	"strconv"
-	"time"
+	"context"
+	"fullcycle-auction_go/configuration/logger"
+	"fullcycle-auction_go/internal/entity/auction_entity"
+	"fullcycle-auction_go/internal/internal_error"
 
-	"challenge-auction/internal/entity/auction_entity"
-	"challenge-auction/internal/infra/database"
-	"challenge-auction/internal/internal_error"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
-type CreateAuctionInputDTO struct {
-	ProductName string  `json:"product_name"`
-	Category    string  `json:"category"`
-	Description string  `json:"description"`
-	Price       float64 `json:"price"`
+type AuctionEntityMongo struct {
+	Id          string                          `bson:"_id"`
+	ProductName string                          `bson:"product_name"`
+	Category    string                          `bson:"category"`
+	Description string                          `bson:"description"`
+	Condition   auction_entity.ProductCondition `bson:"condition"`
+	Status      auction_entity.AuctionStatus    `bson:"status"`
+	Timestamp   int64                           `bson:"timestamp"`
+}
+type AuctionRepository struct {
+	Collection *mongo.Collection
 }
 
-type CreateAuctionOutputDTO struct {
-	ID          string    `json:"id"`
-	ProductName string    `json:"product_name"`
-	Category    string    `json:"category"`
-	Description string    `json:"description"`
-	Price       float64   `json:"price"`
-	Status      string    `json:"status"`
-	CreatedAt   time.Time `json:"created_at"`
-}
-
-type CreateAuctionUseCase struct {
-	AuctionDB database.AuctionInterface
-}
-
-func NewCreateAuctionUseCase(auctionDB database.AuctionInterface) *CreateAuctionUseCase {
-	return &CreateAuctionUseCase{
-		AuctionDB: auctionDB,
+func NewAuctionRepository(database *mongo.Database) *AuctionRepository {
+	return &AuctionRepository{
+		Collection: database.Collection("auctions"),
 	}
 }
 
-func (uc *CreateAuctionUseCase) Execute(input CreateAuctionInputDTO) (*CreateAuctionOutputDTO, *internal_error.InternalError) {
-	auction := auction_entity.NewAuction(
-		input.ProductName,
-		input.Category,
-		input.Description,
-		input.Price,
-	)
-
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-	defer cancel()
-
-	err := uc.AuctionDB.Create(ctx, auction)
+func (ar *AuctionRepository) CreateAuction(
+	ctx context.Context,
+	auctionEntity *auction_entity.Auction) *internal_error.InternalError {
+	auctionEntityMongo := &AuctionEntityMongo{
+		Id:          auctionEntity.Id,
+		ProductName: auctionEntity.ProductName,
+		Category:    auctionEntity.Category,
+		Description: auctionEntity.Description,
+		Condition:   auctionEntity.Condition,
+		Status:      auctionEntity.Status,
+		Timestamp:   auctionEntity.Timestamp.Unix(),
+	}
+	_, err := ar.Collection.InsertOne(ctx, auctionEntityMongo)
 	if err != nil {
-		return nil, internal_error.NewInternalServerError(err.Error())
+		logger.Error("Error trying to insert auction", err)
+		return internal_error.NewInternalServerError("Error trying to insert auction")
 	}
 
-	go uc.startAuctionClosingRoutine(auction.ID)
-
-	output := &CreateAuctionOutputDTO{
-		ID:          auction.ID,
-		ProductName: auction.ProductName,
-		Category:    auction.Category,
-		Description: auction.Description,
-		Price:       auction.Price,
-		Status:      auction.Status,
-		CreatedAt:   auction.CreatedAt,
-	}
-
-	return output, nil
-}
-
-func (uc *CreateAuctionUseCase) startAuctionClosingRoutine(auctionID string) {
-	durationMinutes, _ := strconv.Atoi(os.Getenv("AUCTION_DURATION_MINUTES"))
-	checkIntervalSeconds, _ := strconv.Atoi(os.Getenv("AUCTION_CHECK_INTERVAL_SECONDS"))
-
-	if durationMinutes <= 0 {
-		durationMinutes = 10 // default
-	}
-	if checkIntervalSeconds <= 0 {
-		checkIntervalSeconds = 60 // default
-	}
-
-	auctionDuration := time.Duration(durationMinutes) * time.Minute
-	checkInterval := time.Duration(checkIntervalSeconds) * time.Second
-
-	ticker := time.NewTicker(checkInterval)
-	defer ticker.Stop()
-
-	auctionEndTime := time.Now().Add(auctionDuration)
-
-	for {
-		select {
-		case <-ticker.C:
-			now := time.Now()
-			if now.After(auctionEndTime) {
-				ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-				defer cancel()
-
-				auction, err := uc.AuctionDB.FindById(ctx, auctionID)
-				if err != nil {
-					fmt.Printf("Error finding auction: %v\n", err)
-					return
-				}
-
-				if auction.Status == auction_entity.StatusOpen {
-					auction.Status = auction_entity.StatusClosed
-					err = uc.AuctionDB.Update(ctx, auction)
-					if err != nil {
-						fmt.Printf("Error closing auction: %v\n", err)
-					} else {
-						fmt.Printf("Auction %s closed automatically\n", auctionID)
-					}
-				}
-				return
-			}
-		}
-	}
+	return nil
 }
