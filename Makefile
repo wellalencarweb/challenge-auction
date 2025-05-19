@@ -40,3 +40,9 @@ test: ## Run tests
 .PHONY: lint
 lint: ## Run go vet and lint
 	@go vet ./...
+
+.PHONY: rebuild	
+rebuild: ## Rebuild the compose containers
+	@docker-compose down -v
+	@docker-compose build --no-cache
+	@make up
