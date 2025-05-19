@@ -1,8 +1,6 @@
 package auction
 
 import (
-	"go.mongodb.org/mongo-driver/bson"
-	"strconv"
 	"context"
 	"fullcycle-auction_go/configuration/logger"
 	"fullcycle-auction_go/internal/entity/auction_entity"

@@ -6,20 +6,23 @@ services:
       dockerfile: Dockerfile
       context: .
     ports:
-      - "8080:8080"
+      - "8000:8000"
     env_file:
       - cmd/auction/.env
-    command: sh -c "/auction"
+    command: go run cmd/auction/main.go
+    depends_on:
+      - mongodb
     networks:
       - localNetwork
 
   mongodb:
-    image: mongo:latest
+    image: mongo:6.0
     container_name: mongodb
     ports:
       - "27017:27017"
-    env_file:
-      - cmd/auction/.env
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin
     volumes:
       - mongo-data:/data/db
     networks:
