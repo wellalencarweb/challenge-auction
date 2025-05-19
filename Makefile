@@ -46,3 +46,13 @@ rebuild: ## Rebuild the compose containers
 	@docker-compose down -v
 	@docker-compose build --no-cache
 	@make up
+
+
+## ----- MONGODB	
+.PHONY: seed
+seed: ## Seed the database
+	docker cp mongo-seed.js mongodb:/mongo-seed.js
+	docker exec -it mongodb mongosh -u admin -p admin --authenticationDatabase admin /mongo-seed.js
+
+
+
