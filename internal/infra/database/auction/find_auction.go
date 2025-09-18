@@ -17,8 +17,11 @@ func (ar *AuctionRepository) FindAuctionById(
 	filter := bson.M{"_id": id}
 
 	var auctionEntityMongo AuctionEntityMongo
-	if err := ar.Collection.FindOne(ctx, filter).Decode(&auctionEntityMongo); err != nil {
+	err := ar.Collection.FindOne(ctx, filter).Decode(&auctionEntityMongo)
+	if err != nil {
 		logger.Error(fmt.Sprintf("Error trying to find auction by id = %s", id), err)
+		// Adiciona log detalhado do erro para depuração
+		fmt.Printf("[DEBUG] FindAuctionById: erro do driver: %v\n", err)
 		return nil, internal_error.NewInternalServerError("Error trying to find auction by id")
 	}
 
