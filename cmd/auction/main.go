@@ -12,10 +12,11 @@ import (
 	"fullcycle-auction_go/internal/usecase/auction_usecase"
 	"fullcycle-auction_go/internal/usecase/bid_usecase"
 	"fullcycle-auction_go/internal/usecase/user_usecase"
+	"log"
+
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/mongo"
-	"log"
 )
 
 func main() {
@@ -35,6 +36,11 @@ func main() {
 	router := gin.Default()
 
 	userController, bidController, auctionsController := initDependencies(databaseConnection)
+
+	// Initialize and start the auto close manager
+	autoCloseManager := auction.NewAutoCloseManager(databaseConnection)
+	autoCloseManager.Start()
+	defer autoCloseManager.Stop()
 
 	router.GET("/auction", auctionsController.FindAuctions)
 	router.GET("/auction/:auctionId", auctionsController.FindAuctionById)
