@@ -10,14 +10,40 @@ import (
 )
 
 type AuctionEntityMongo struct {
-	Id          string                          `bson:"_id"`
-	ProductName string                          `bson:"product_name"`
-	Category    string                          `bson:"category"`
-	Description string                          `bson:"description"`
-	Condition   auction_entity.ProductCondition `bson:"condition"`
-	Status      auction_entity.AuctionStatus    `bson:"status"`
-	Timestamp   int64                           `bson:"timestamp"`
+	Id          string `bson:"_id"`
+	ProductName string `bson:"product_name"`
+	Category    string `bson:"category"`
+	Description string `bson:"description"`
+	Condition   int32  `bson:"condition"`
+	Status      int32  `bson:"status"`
+	Timestamp   int64  `bson:"timestamp"`
+	EndTime     int64  `bson:"end_time"`
 }
+
+func (a *AuctionEntityMongo) ToAuctionStatus() auction_entity.AuctionStatus {
+	switch a.Status {
+	case 0:
+		return auction_entity.Active
+	case 1:
+		return auction_entity.Completed
+	default:
+		return auction_entity.Active
+	}
+}
+
+func (a *AuctionEntityMongo) ToProductCondition() auction_entity.ProductCondition {
+	switch a.Condition {
+	case 1:
+		return auction_entity.New
+	case 2:
+		return auction_entity.Used
+	case 3:
+		return auction_entity.Refurbished
+	default:
+		return auction_entity.New
+	}
+}
+
 type AuctionRepository struct {
 	Collection *mongo.Collection
 }
@@ -36,9 +62,10 @@ func (ar *AuctionRepository) CreateAuction(
 		ProductName: auctionEntity.ProductName,
 		Category:    auctionEntity.Category,
 		Description: auctionEntity.Description,
-		Condition:   auctionEntity.Condition,
-		Status:      auctionEntity.Status,
+		Condition:   int32(auctionEntity.Condition),
+		Status:      int32(auctionEntity.Status),
 		Timestamp:   auctionEntity.Timestamp.Unix(),
+		EndTime:     auctionEntity.EndTime.Unix(),
 	}
 	_, err := ar.Collection.InsertOne(ctx, auctionEntityMongo)
 	if err != nil {

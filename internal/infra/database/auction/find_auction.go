@@ -6,9 +6,10 @@ import (
 	"fullcycle-auction_go/configuration/logger"
 	"fullcycle-auction_go/internal/entity/auction_entity"
 	"fullcycle-auction_go/internal/internal_error"
+	"time"
+
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"time"
 )
 
 func (ar *AuctionRepository) FindAuctionById(
@@ -26,9 +27,10 @@ func (ar *AuctionRepository) FindAuctionById(
 		ProductName: auctionEntityMongo.ProductName,
 		Category:    auctionEntityMongo.Category,
 		Description: auctionEntityMongo.Description,
-		Condition:   auctionEntityMongo.Condition,
-		Status:      auctionEntityMongo.Status,
+		Condition:   auctionEntityMongo.ToProductCondition(),
+		Status:      auctionEntityMongo.ToAuctionStatus(),
 		Timestamp:   time.Unix(auctionEntityMongo.Timestamp, 0),
+		EndTime:     time.Unix(auctionEntityMongo.EndTime, 0),
 	}, nil
 }
 
@@ -70,10 +72,11 @@ func (repo *AuctionRepository) FindAuctions(
 			Id:          auction.Id,
 			ProductName: auction.ProductName,
 			Category:    auction.Category,
-			Status:      auction.Status,
+			Status:      auction.ToAuctionStatus(),
 			Description: auction.Description,
-			Condition:   auction.Condition,
+			Condition:   auction.ToProductCondition(),
 			Timestamp:   time.Unix(auction.Timestamp, 0),
+			EndTime:     time.Unix(auction.EndTime, 0),
 		})
 	}
 
