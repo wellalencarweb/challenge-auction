@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      dockerfile: Dockerfile
+      context: .
+    ports:
+      - "8080:8080"
+    env_file:
+      - cmd/auction/.env
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - localNetwork
+
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=admin
+      - MONGO_INITDB_DATABASE=auctions
+    volumes:
+      - mongo-data:/data/db
+      - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+    command: mongod --auth --wiredTigerCacheSizeGB 1.5
+    healthcheck:
+      test: mongosh --eval "db.adminCommand('ping')" --username admin --password admin --authenticationDatabase admin
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - localNetwork
+
+volumes:
+  mongo-data:
+    driver: local
+
+networks:
+  localNetwork:
+    driver: bridge
