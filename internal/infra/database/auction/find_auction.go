@@ -6,9 +6,10 @@ import (
 	"fullcycle-auction_go/configuration/logger"
 	"fullcycle-auction_go/internal/entity/auction_entity"
 	"fullcycle-auction_go/internal/internal_error"
+	"time"
+
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"time"
 )
 
 func (ar *AuctionRepository) FindAuctionById(
@@ -39,9 +40,9 @@ func (repo *AuctionRepository) FindAuctions(
 	productName string) ([]auction_entity.Auction, *internal_error.InternalError) {
 	filter := bson.M{}
 
-	if status != 0 {
-		filter["status"] = status
-	}
+	// Convertemos o status para garantir que a comparação seja consistente
+	statusInt := int(status)
+	filter["status"] = statusInt
 
 	if category != "" {
 		filter["category"] = category
