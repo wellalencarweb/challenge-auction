@@ -10,6 +10,7 @@ import (
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.uber.org/zap"
 )
 
 func (ar *AuctionRepository) FindAuctionById(
@@ -38,23 +39,51 @@ func (repo *AuctionRepository) FindAuctions(
 	status auction_entity.AuctionStatus,
 	category string,
 	productName string) ([]auction_entity.Auction, *internal_error.InternalError) {
-	filter := bson.M{}
 
-	// Convertemos o status para garantir que a comparação seja consistente
+	logger.Info("Iniciando busca de leilões",
+		zap.Int("status_desejado", int(status)))
+
+	// Usando bson.D para garantir a ordem dos campos e tipos corretos
 	statusInt := int(status)
-	filter["status"] = statusInt
+	logger.Info("Buscando leilões com status", zap.Int("status", statusInt))
+
+	// Construindo o filtro usando bson.M para maior flexibilidade
+	filter := bson.M{
+		"status": int(status),
+	}
 
 	if category != "" {
 		filter["category"] = category
 	}
 
 	if productName != "" {
-		filter["productName"] = primitive.Regex{Pattern: productName, Options: "i"}
+		filter["product_name"] = primitive.Regex{Pattern: productName, Options: "i"}
 	}
 
+	logger.Info("Filtro da consulta",
+		zap.Any("filter", filter),
+		zap.Int("status_esperado", int(status)))
+
+	// Debug: Vamos verificar todos os documentos primeiro
+	allDocs, err := repo.Collection.Find(ctx, bson.M{})
+	if err != nil {
+		logger.Error("Error finding all auctions", err)
+		return nil, internal_error.NewInternalServerError("Error finding auctions")
+	}
+	defer allDocs.Close(ctx)
+
+	var allAuctions []bson.M
+	if err := allDocs.All(ctx, &allAuctions); err != nil {
+		logger.Error("Error decoding all auctions", err)
+		return nil, internal_error.NewInternalServerError("Error decoding auctions")
+	}
+	logger.Info("All documents in collection", zap.Any("auctions", allAuctions))
+
+	// Agora vamos buscar com o filtro
+	logger.Info("Executing MongoDB query with filter", zap.Any("filter", filter))
 	cursor, err := repo.Collection.Find(ctx, filter)
 	if err != nil {
-		logger.Error("Error finding auctions", err)
+		logger.Error("Error finding auctions with filter", err, zap.Any("filter", filter))
 		return nil, internal_error.NewInternalServerError("Error finding auctions")
 	}
 	defer cursor.Close(ctx)
@@ -67,6 +96,7 @@ func (repo *AuctionRepository) FindAuctions(
 
 	var auctionsEntity []auction_entity.Auction
 	for _, auction := range auctionsMongo {
+		logger.Info(fmt.Sprintf("Found auction: ID=%s, Status=%d", auction.Id, auction.Status))
 		auctionsEntity = append(auctionsEntity, auction_entity.Auction{
 			Id:          auction.Id,
 			ProductName: auction.ProductName,
