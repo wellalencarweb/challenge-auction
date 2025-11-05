@@ -1,7 +1,7 @@
 
 # GoExpert Auction Timer ⏳
 
-Projeto do laboratório **"Concorrência com Golang - Leilão"** do treinamento GoExpert (FullCycle). O objetivo deste projeto é adicionar uma nova funcionalidade para que o leilão seja fechado automaticamente após um tempo definido, utilizando **goroutines** para gerenciamento concorrente. Desenvolvido por **Paulo Nunes**.
+Projeto do laboratório **"Concorrência com Golang - Leilão"** do treinamento GoExpert (FullCycle). O objetivo deste projeto é adicionar uma nova funcionalidade para que o leilão seja fechado automaticamente após um tempo definido, utilizando **goroutines** para gerenciamento concorrente.
 
 ---
 
@@ -88,8 +88,13 @@ make clear
 ### Executar Tudo em Sequência ⚙️
 Para rodar toda a sequência de comandos (clear, up, create, list, check, test), use:
 ```bash
-make all
+make setup
 ```
+
+### Exemplo de Execução 📺
+A imagem abaixo mostra um exemplo do fluxo completo de execução:
+
+![Exemplo de execução do setup](docs/setup.png)
 
 ---
 
